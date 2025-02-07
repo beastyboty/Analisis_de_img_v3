@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLP & PDP Diseño Moderno</title>
+    <style>
+       
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+header {
+    width: 100%;
+    padding: 20px 0;
+    background-color: #1e3a8a;
+    color: white;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 90%;
+    margin-top: 20px;
+    gap: 20px;
+}
+
+.plp {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.image-card {
+    background-color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.image-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.image-info {
+    padding: 15px;
+    text-align: center;
+}
+
+.image-info h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #1f2937;
+}
+
+.image-info p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.pdp {
+    flex: 1;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.pdp img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    margin-bottom: 20px;
+}
+
+.pdp h3 {
+    font-size: 18px;
+    margin: 10px 0;
+    color: #1f2937;
+}
+
+.pdp p {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.select-folder {
+    margin: 20px;
+    padding: 10px 20px;
+    background-color: #1e3a8a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.select-folder:hover {
+    background-color: #3749c8;
+}
+
+    </style>
+</head>
+<body>
+    <header>Galería de Imágenes - PLP y PDP</header>
+
+    <input type="file" id="folder" class="select-folder" webkitdirectory mozdirectory />
+
+    <div class="container">
+        <div class="plp">
+            <!-- Miniaturas de imágenes -->
+        </div>
+
+        <div class="pdp">
+            <h3>Seleccione una imagen para verla en detalle</h3>
+            <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                <button id="flecha-izquierda" class="flecha" style="position: absolute; left: 0; font-size: 24px; cursor: pointer;">&#9664;</button>
+                <div>
+                    <p id="fecha-pdp" style="font-size: 14px; color: #4b5563; margin-bottom: 10px;">Fecha: </p>
+                    <img id="imagen-detalle" src="" alt="" style="display: none; max-height: 454px;">
+                </div>
+                <button id="flecha-derecha" class="flecha" style="position: absolute; right: 0; font-size: 24px; cursor: pointer;">&#9654;</button>
+            </div>
+            <div id="image-details">
+           
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('folder').addEventListener('change', function (event) {
+            const fechaPDP = document.getElementById('fecha-pdp');
+            const flechaIzquierda = document.getElementById('flecha-izquierda');
+            const flechaDerecha = document.getElementById('flecha-derecha');
+            let currentIndex = 0; // Índice actual de la imagen seleccionada
+            let imagesArray = []; // Arreglo para almacenar las imágenes
+            const files = event.target.files;
+            const plpContainer = document.querySelector('.plp');
+            const pdpImage = document.getElementById('imagen-detalle');
+            const pdpDetails = document.getElementById('image-details');
+
+            plpContainer.innerHTML = ''; // Limpiar el contenedor de miniaturas
+            imagesArray = Array.from(files); // Guardar los archivos en el arreglo
+
+            function mostrarImagen(index) {
+                currentIndex = index;
+                const file = imagesArray[index];
+                const img = new Image();
+                const pesoKB = (file.size / 1024).toFixed(2);
+                const tipoImagen = file.type;
+                img.src = URL.createObjectURL(file);
+
+                img.onload = () => {
+                    const fechaActual = new Date().toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                    });
+
+                    fechaPDP.textContent = `Fecha: ${fechaActual}`;
+                    pdpImage.src = img.src;
+                    pdpImage.style.display = 'block';
+                    pdpDetails.innerHTML = `
+                        <h3>${file.name}</h3>
+                        <p>Dimensiones: ${img.naturalWidth} x ${img.naturalHeight} px</p>
+                        <p>Peso: ${pesoKB} KB</p>
+                        <p>Tipo: ${tipoImagen}</p>
+                    `;
+                    analizarBordes(img);
+                };
+            }
+
+            // Crear miniaturas y asignar eventos
+            imagesArray.forEach((file, index) => {
+                const card = document.createElement('div');
+                card.classList.add('image-card');
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.alt = file.name;
+
+                const info = document.createElement('div');
+                info.classList.add('image-info');
+                info.innerHTML = `<h4>${file.name}</h4>`;
+
+                img.onload = () => {
+                    info.innerHTML += `<p>${img.naturalWidth} x ${img.naturalHeight} px</p>`;
+                    const fileSize = (file.size / 1024).toFixed(2); // Tamaño en KB
+                    const fileType = file.type; // Tipo de archivo (ejemplo: image/jpeg)
+                    info.innerHTML += `<p>Peso: ${fileSize} KB</p>`;
+                    info.innerHTML += `<p>Tipo: ${fileType}</p>`;
+                };
+
+                card.appendChild(img);
+                card.appendChild(info);
+
+                // Al hacer clic en una miniatura, mostrarla en el PDP
+                card.addEventListener('click', () => {
+                    mostrarImagen(index);
+                });
+
+                plpContainer.appendChild(card);
+            });
+
+            // Manejar clics en las flechas
+            flechaIzquierda.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + imagesArray.length) % imagesArray.length;
+                mostrarImagen(currentIndex);
+            });
+
+            flechaDerecha.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % imagesArray.length;
+                mostrarImagen(currentIndex);
+            });
+
+            // Mostrar la primera imagen por defecto
+            if (imagesArray.length > 0) {
+                mostrarImagen(0);
+            }
+        });
+
+        function analizarBordes(img) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Obtener los píxeles de los bordes
+            const borderPixels = [];
+            for (let i = 0; i < canvas.width; i++) {
+                borderPixels.push(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]); // Borde superior
+                borderPixels.push(data[(canvas.height - 1) * canvas.width * 4 + i * 4], data[(canvas.height - 1) * canvas.width * 4 + i * 4 + 1], data[(canvas.height - 1) * canvas.width * 4 + i * 4 + 2]); // Borde inferior
+            }
+            for (let i = 0; i < canvas.height; i++) {
+                borderPixels.push(data[i * canvas.width * 4], data[i * canvas.width * 4 + 1], data[i * canvas.width * 4 + 2]); // Borde izquierdo
+                borderPixels.push(data[(i * canvas.width + canvas.width - 1) * 4], data[(i * canvas.width + canvas.width - 1) * 4 + 1], data[(i * canvas.width + canvas.width - 1) * 4 + 2]); // Borde derecho
+            }
+
+            // Calcular el brillo promedio de los píxeles de los bordes
+            let sum = 0;
+            for (let i = 0; i < borderPixels.length; i += 3) {
+                sum += (borderPixels[i] + borderPixels[i + 1] + borderPixels[i + 2]) / 3;
+            }
+            const brilloPromedio = sum / (borderPixels.length / 3);
+
+            // Umbral de brillo (puedes ajustarlo según lo necesites)
+            const umbralBajo = 200; // Para detectar bordes claros
+
+            const apta = brilloPromedio > umbralBajo;
+            const mensajeBordes = apta ? "La imagen es apta (bordes claros)." : "La imagen no es apta (bordes oscuros).";
+
+            document.getElementById('image-details').innerHTML += `
+                <p><strong>Análisis de bordes:</strong> ${mensajeBordes}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
